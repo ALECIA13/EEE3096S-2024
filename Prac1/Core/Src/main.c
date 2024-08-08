@@ -43,9 +43,40 @@
 TIM_HandleTypeDef htim16;
 
 /* USER CODE BEGIN PV */
-// TODO: Define input variables
-//Amos MAnganye was here
-//the owner is here!!!!
+// TODO: Define input variables(initializing LEDs and Pushbuttons
+// Define LED and button pins
+#define LED0_PIN LL_GPIO_PIN_0
+#define LED1_PIN LL_GPIO_PIN_1
+#define LED2_PIN LL_GPIO_PIN_2
+#define LED3_PIN LL_GPIO_PIN_3
+#define LED4_PIN LL_GPIO_PIN_4
+#define LED5_PIN LL_GPIO_PIN_5
+#define LED6_PIN LL_GPIO_PIN_6
+#define LED7_PIN LL_GPIO_PIN_7
+
+#define BUTTON0_PIN LL_GPIO_PIN_0
+#define BUTTON1_PIN LL_GPIO_PIN_1
+#define BUTTON2_PIN LL_GPIO_PIN_2
+#define BUTTON3_PIN LL_GPIO_PIN_3
+
+#define LED_GPIO_PORT GPIOB
+#define BUTTON_GPIO_PORT GPIOA
+
+// Define LED patterns
+uint8_t patterns[9][8] = {
+    {1, 1, 1, 0, 1, 0, 0, 1},
+    {1, 1, 0, 1, 0, 0, 1, 0},
+    {1, 0, 1, 0, 0, 1, 0, 0},
+    {0, 1, 0, 0, 1, 0, 0, 0},
+    {1, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 1, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+uint8_t current_pattern = 0;
+uint32_t delay = 1000; // Initial delay of 1 second
 
 /* USER CODE END PV */
 
@@ -56,9 +87,21 @@ static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
 void TIM16_IRQHandler(void);
 /* USER CODE END PFP */
-
+void TIM16_IRQHandler(void);
+void Set_LED_Pattern(uint8_t pattern[8]);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+// Function to set the LEDs according to the pattern
+void Set_LED_Pattern(uint8_t pattern[8]) {
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED0_PIN, pattern[0]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED1_PIN, pattern[1]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED2_PIN, pattern[2]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED3_PIN, pattern[3]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED4_PIN, pattern[4]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED5_PIN, pattern[5]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED6_PIN, pattern[6]);
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED7_PIN, pattern[7]);
+}
 
 /* USER CODE END 0 */
 
@@ -70,6 +113,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -92,6 +136,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // TODO: Start timer TIM16
+  HAL_TIM_Base_Start_IT(&htim16);
+  // Function to set the LEDs according to the pattern
 
   /* USER CODE END 2 */
 
@@ -104,10 +150,18 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
     // TODO: Check pushbuttons to change timer delay
-    
-    
-
-  }
+	  if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON0_PIN) == GPIO_PIN_SET) {
+	          delay = 500;
+	      } else if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON1_PIN) == GPIO_PIN_SET) {
+	          delay = 2000;
+	      } else if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON2_PIN) == GPIO_PIN_SET) {
+	          delay = 1000;
+	      } else if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON3_PIN) == GPIO_PIN_SET) {
+	          current_pattern = 0;
+	      }
+	       // Adjust timer delay if necessary
+	       __HAL_TIM_SET_AUTORELOAD(&htim16, delay - 1);
+	     }
   /* USER CODE END 3 */
 }
 
@@ -327,7 +381,12 @@ void TIM16_IRQHandler(void)
 
 	// TODO: Change LED pattern
 	// print something
+	// Change LED pattern
+		current_pattern = (current_pattern + 1) % 9; // Cycle through the patterns
+		Set_LED_Pattern(patterns[current_pattern]);
 
+		// Print current pattern to debug (optional, if you have a UART or other debug output configured)
+		// printf("Current pattern: %d\n", current_pattern);
   
 }
 
